@@ -1,6 +1,7 @@
 #!coding: utf-8
 
 import os
+import pandas as pd
 
 class Prepare():
     """
@@ -60,12 +61,65 @@ class Prepare():
         """
         read site file
         """
+        outsites = []
+        #fragsite = []
+        #siteflag = 'None'
         sites = open(sitefile).readlines()[1:]
-        sites = [s.split(',')[1:3] for s in sites]
-        print(sites)
+        for site in sites:
+            sis = site.split(',')
+            resid = sis[1]
+            sit = sis[2].replace('x', '.')
+            if len(sit.split('.')[0]) == 2:
+                sit = 'None'
+            #if sit.split('.')[0] == siteflag:
+            #    fragsite.append((resid, sit))
+            #else:
+            #    siteflag = sit.split('.')[0]
+            #    outsites.append(fragsite)
+            #    fragsite = []
+            #    fragsite.append((resid, sit))
+            outsites.append((resid, sit))
+        return outsites
+
+    def split_seq(self, sites, seq):
+        """
+        split pdb sequence
+        """
+        reslist = []
+        resfrag = []
+        siteflag = 'None'
+        for i, resd in enumerate(seq):
+            resid = resd[0]
+            res = resd[1]
+            siteid = sites[i][0]
+            site = sites[i][1]
+            fragname = site.split('.')[0]
+            assert resid == siteid, print('res ID not match')
+            if fragname == siteflag:
+                resfrag.append((site, res))
+            else:
+                siteflag = fragname
+                reslist.append(resfrag)
+                resfrag = []
+                resfrag.append((site, res))
+        return reslist
+
+    def query_seq(self, queryfile):
+        """
+        read query file
+        """
+        data = pd.read_csv(queryfile)
+        for row in data.iterrows():
+            CAnuming = row[1]['CAnumFrag'].split('#')
+            fragment = row[1]['fragment']
+            header = row[1]['header']
+            
 
 
 if __name__ == "__main__":
     test = Prepare()
-    #test.extract_seq_from_pdb('test.pdb')
-    test.read_site('test.csv')
+    files = test.read_files()
+    #pdb_seq = test.extract_seq_from_pdb('test.pdb')
+    #pdb_site = test.read_site('test.csv')
+    #test.split_seq(pdb_site, pdb_seq)
+    #test.query_seq('99883.csv')
